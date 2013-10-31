@@ -1,0 +1,54 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+body {
+	background:#DDDAD9;
+}
+#wrap {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	overflow-x: hidden;
+	overflow-y: hidden;
+	z-index: 1;
+}
+#Background {
+	position: absolute;
+	z-index: -1;
+	width: 100%;
+	height: 100%;
+}
+#Window {
+	position: absolute;
+	z-index: -1;
+}
+.container {
+	height: 100%;
+	width: 100%;
+	margin: 0% auto;
+}
+.Button {
+	-webkit-transform:scale(1.0);
+	-moz-transform:scale(1.0);
+	-o-transform:scale(1.0);
+	-webkit-transition-duration: 0.5s;
+	-moz-transition-duration: 0.5s;
+	-o-transition-duration: 0.5s;
+}
+.Button:hover {
+	-webkit-transform:scale(1.2);
+	-webkit-box-shadow:0px 0px 30px #ccc;
+	-moz-transform:scale(1.2);
+	-moz-box-shadow:0px 0px 30px #ccc;
+	-o-transform:scale(1.2);
+	-o-box-shadow:0px 0px 30px #ccc;
+}
+input.Text {
+	background-color: transparent;
+	background-image: url(image/TextBar.png);
+	background-repeat: no-repeat;
+	border: 1px;
+}
