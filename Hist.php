@@ -1,9 +1,24 @@
 <?php
-	$con = mysqli_connect("10.0.3.19","peter","abc123","my_db");
+include('Uconn.php');
 
-	
-	if (mysqli_connect_errno($con))
-	  {
-		echo "Failed to connect to MySQL: " . mysqli_connect_error();
-	  }
+try {
+	$newlink = ulink($server, $user, $pass, $database);
+} catch (Exception $ex) {
+	echo '错误信息：' .$ex->getMessage();
+}
+
+$searchdate = date("Y-m-d");	// MySQL type: DATE
+
+
+while ()
+$sqlcurreval = "SELECT FROM WHERE ";	// Current evaluation period SQL
+$result = mysqli_query($newlink, $sqlcurreval);
+while($record = mysqli_fetch_array($result))
+  {
+  echo $row['FirstName'] . " " . $row['LastName'];
+  echo "<br>";
+  } 
+
+$sqlpreveval = 'SELECT FROM WHERE';	// Previous evaluation period SQL
+
 ?>

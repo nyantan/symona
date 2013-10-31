@@ -4,6 +4,8 @@
 	$user = "uconn";
 	$pass = "nShyN4QEvuN5csat";
 	$database = "lh";
+// Setting
+	$setting = "setting";
 
 function ulink($s, $u, $p, $d) {
 	/*
@@ -13,9 +15,12 @@ function ulink($s, $u, $p, $d) {
 	$uconn = mysqli_connect($s, $u, $p, $d);
  
 	if (mysqli_connect_errno($con)) {
-		<script language='javascript'> alert("无法连接到数据库: ". mysqli_connect_error()); </script>
+		echo '<script type="text/javascript"> alert("无法连接到数据库");</script>';
+		throw new Exception ("Cannot connect to MySQL: ". mysqli_connect_error());
 	} else {
 		return $uconn;
 	}
 }
+
+function 
 ?>
