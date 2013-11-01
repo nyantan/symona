@@ -187,6 +187,60 @@ table {
 <!--Format:-------------------------------------------------------------------------------------------------------------------------------------------------------------
 <tr align="center"><td>班级</td><td>学习</td><td>自律</td><td>生活</td><td>卫生</td><td>文艺</td><td>体育</td><td>宿管</td><td>总分</td></tr>
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+<?php
+include('Uconn.php');
+
+try {
+	$newlink = ulink($server, $user, $pass, $database);
+} catch (Exception $ex) {
+	echo $ex->getMessage();
+}
+
+// Load from loadsettings()
+	$loaded = loadsettings($newlink);
+	while ($loader = $loaded->fetch_field()) {
+		$histyear = $loader->lhconf_year;
+		$histy = array(1 => $loader->lhconf_y10,
+					   2 => $loader->lhconf_y11,
+					   3 => $loader->lhconf_y12);
+	}
+	$loaded = null;
+// END of loadsettings()
+// Load from loaddepts()
+	$loaded = loaddepts($newlink);
+	$count = 1;
+	$depts = array();
+	while ($loader = $loaded->fetch_field()) {
+		$depts[$count] = $loader->dept_name;
+	}
+	return $depts;
+// END of loaddepts()
+
+echo '<tr align="center">';
+	$searchdate = date("Y-m-d");	// MySQL type: DATE
+	foreach($histy as &$yearinfo) {
+		$loopingyear = $histyear + $i;
+		$numofclasses = $yearinfo % 10;
+		for($q = 0; q < $numofclasses; q++) {
+			$thisclass = ((int) $yearinfo / $numofclasses) + $q;
+			echo '<td>'. (string) $loopingyear. '级'. (string) $thisclass. '班'. '</td>'
+			$thistotal = 0;
+			foreach($depts as &$dept) {
+				$sqlthiseval = "SELECT SUM(eval_score) FROM eval
+								WHERE eval_effective = '1' AND
+								eval_class = ". (string) $loopingyear. (string) $thisclass. "AND
+								eval_dept_name = '". (string) $dept. "'";	// Current evaluation period SQL
+				$sqlthisreturn = $newlink->query($sqlthiseval);
+				$thistotal += $sqlthisreturn->fetch_field()->SUM(eval_score);
+				echo '<td>'. (string) $sqlthisreturn->fetch_field()->SUM(eval_score). '</td>';
+			}
+			echo '<td>'. (string) $thistotal. '</td>';
+			echo '</tr>\n'
+		}
+	}
+?>
+
 <!--Examples:-->
 					<tr align="center"><td>高二二十一</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>250</td></tr>
 <!--Output End-->
