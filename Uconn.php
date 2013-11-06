@@ -1,55 +1,128 @@
 <?php
+/*
+ * Unpriviledged MySQL server connection
+ *
+ * @Author: Yi Zhang
+ * @Email:  sakane@live.cn
+ * 
+ * @Version:  2013-11-06
+ *
+ */
+
 // Global variables
-	$server = "10.0.3.19";
-	$user = "uconn";
-	$pass = "nShyN4QEvuN5csat";
-	$database = "lh";
-// Setting
-	$setting = "lhconf";
+  $server = '10.0.3.19';
+  $user = 'uconn';
+  $pass = 'nShyN4QEvuN5csat';
+  $database = 'lh';
+  $settings = 'lhconf';
 
-function ulink($s, $u, $p, $d) {
-	/*
-	 * Open an Unprivileged connection to MySQL server
-	 * Parameters stands for server, username, password and database respectively
-	 */
-	$uconn = new mysqli($s, $u, $p, $d);
- 
-	if ($uconn -> connect_errno) {
-		echo '<script type="text/javascript"> alert("Cannot connect to database: '. $uconn->connect_error.'");</script>';
-		throw new Exception ("Cannot connect to MySQL: ". $uconn->connect_error);
-	} else {
-		return $uconn;
-	}
+  $histyear = 0;
+  $histgrade = array();
+  $depts = array();
+
+function ulink() {
+  /*
+   * Open an unpriviledged connection to MySQL server
+   * Will load global variables at this time
+   */
+
+  global $server, $user, $pass, $database;
+  $newconn = new mysqli($server, $user, $pass, $database);
+
+  if ($newconn->connect_errno) {
+    echo "<script type=\"text/javascript\"> alert(\"Cannot contact database: {$newconn->connect_error}\");<script>";
+    return false;
+  } else {
+    return $newconn;
+  }
 }
 
-function loadsettings($settingslink) {
-	/*
-	 * TBD: QUERY CONDITION
-	 * POSSIBLE SOLUTION: BUILD AN INUSE RECORD
-	 */
-	$settingsquery = "SELECT lhconf_year, lhconf_y10, lhconf_y11, lhconf_y12 FROM lhconf 
-					  WHERE lhconf_profile == 'INUSE'";
-	// Test query and connection
-	$settingsresult = $settingslink->query($settingquery);
-	if (!settingsresult) {
-		// FAULTY CONNECTION!!! EXCEPTION!!!
-		echo '<script type="text/javascript"> alert("Cannot load server settings: '. $settingsresult->error. '")';
-		throw new Exception ("Cannot load server settings: ". $settingslink->error);
-	} else {
-		return $settingsresult;
-	}
+function loadsettings () {
+  global $histyear, $histgrade;
+
+  $query = "SELECT lhconf_year, lhconf_y10, lhconf_y11, lhconf_y12
+	          FROM lhconf
+	          WHERE lhconf_profile = 'INUSE'";
+  $reply = ulink()->query($query);
+
+  if (!$reply) {
+    // This gives a faulty connection, we echo an alert box
+    echo "<script type=\"text/javascript\"> alert(\"Cannot load settings: {$reply->error}\");</script>";
+    return false;
+  }
+
+  // Load settings
+  $loader = $reply->fetch_array();
+  $histyear = $loader[0];
+  array_push($histgrade, $loader[1], $loader[2], $loader[3]);
+  $reply->free();
 }
 
-function loaddepts($deptslink) {
-	$deptsquery = "SELECT dept_id FROM dept
-				   WHERE dept_id > 0";
-	$deptsquery = $deptslink->query($deptsquery);
-	if (!deptssresult) {
-		// FAULTY CONNECTION!!! EXCEPTION!!!
-		echo '<script type="text/javascript"> alert("Cannot load departments: '. $settingsresult->error. '")';
-		throw new Exception ("Cannot load departments: ". $settingslink->error);
-	} else {
-		return $deptsresult;
-	}
+
+function loaddepts () {
+  global $depts;
+
+  $query = "SELECT dept_id
+	          FROM dept
+	          WHERE dept_id > 0";
+  $reply = ulink()->query($query);
+
+  if (!$reply) {
+    // This gives another faulty connection
+    echo "<script type=\"text/javascript\"> alert(\"Cannot load departments: {$reply->error}\");</script>";
+    return false;
+  }
+
+  /* Notice:
+   * Departments are sequenced according to the layout of table
+   * If the sequence of departments appears differently from the record in database
+   * Wrong subtotal will be assigned.
+   */
+                
+  while ($loader = $reply->fetch_array()) {
+    array_push($depts, $loader[0]);
+  }
+
+  $reply->free();
 }
+
+function printthiseval () {
+  global $histyear, $histgrade, $depts;
+
+  // Define a grade counter;
+  $gradecount = 0;
+  foreach ($histgrade as &$gradeinfo) {
+    $loopingyear = $histyear - $gradecount;
+    $numofclasses = $gradeinfo % 10;
+
+    for ($q = 0; $q < $numofclasses; $q++) {
+      $thisclass = ($gradeinfo - $numofclasses) / 10 + $q;
+      $fullclassstr = $loopingyear. $thisclass; // XXX:
+      // First column: Grade and Class
+      echo "\t<tr align=\"center\"><td>{$loopingyear}级{$thisclass}班</td>";
+    
+      $thistotal = 0;
+      foreach($depts as &$dept) {  
+        $depttotal = 0;  
+        $sqlthiseval = "SELECT SUM(eval_score) FROM eval
+                        WHERE eval_effective = '1' AND
+                        eval_class = '{$fullclassstr}' AND
+                        eval_dept_id = '{$dept}'";
+
+        $sqlthisreturn = ulink()->query($sqlthiseval);
+        $depttotal = $sqlthisreturn->fetch_array();
+        $thistotal += $depttotal[0];
+        // Second to the last but one columns, for each departments
+        echo "<td>{$depttotal[0]}</td>";
+      }
+
+      // Last column, class total
+      echo "<td>{$thistotal}</td></tr>\n";
+    }
+
+    $gradecount++;
+  }
+  $sqlthisreturn->free();
+}
+
 ?>
