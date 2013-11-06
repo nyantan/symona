@@ -1,60 +1,88 @@
 <?php
+/*
+ * Tab: Show history
+ *
+ * @Author: Yi Zhang
+ * @Email:  sakane@live.cn
+ * 
+ * @Version:  2013-11-06
+ *
+ */
+
 include('Uconn.php');
 
 try {
-	$newlink = ulink($server, $user, $pass, $database);
+  $newlink = ulink();
 } catch (Exception $ex) {
-	echo $ex->getMessage();
+  // TBD: Echo a frame of error message;
+  // echo $ex->getMessage();
 }
 
-// Load from loadsettings()
-	$loaded = loadsettings($newlink);
-	while ($loader = $loaded->fetch_field()) {
-		$histyear = $loader->lhconf_year;
-		$histy = array(1 => $loader->lhconf_y10,
-					   2 => $loader->lhconf_y11,
-					   3 => $loader->lhconf_y12);
-	}
-	$loaded = null;
-// END of loadsettings()
-// Load from loaddepts()
-	$loaded = loaddepts($newlink);
-	$count = 1;
-	$depts = array();
-	while ($loader = $loaded->fetch_field()) {
-		$depts[$count] = $loader->dept_name;
-	}
-	return $depts;
-// END of loaddepts()
+// Load settings
+  $loader = loadsettings($newlink)->fetch_field();
+  // TBD: $histyear indicates the entry year of y10
+  $histyear = $loader->lhconf_year;
+  $histgrade = array(1 => $loader->lhconf_y10
+                     2 => $loader->lhconf_y11
+                     3 => $loader->lhconf_y12);
+// Settings loaded
 
-/*
- * 
- */
-function outputeval() {
-	echo '<tr align="center">';
-	$searchdate = date("Y-m-d");	// MySQL type: DATE
-	foreach($histy as &$yearinfo) {
-		$loopingyear = $histyear + $i;
-		$numofclasses = $yearinfo % 10;
-		for($q = 0; q < $numofclasses; q++) {
-			$thisclass = ((int) $yearinfo / $numofclasses) + $q;
-			echo '<td>'. (string) $loopingyear. '级'. (string) $thisclass. '班'. '</td>'
-			$thistotal = 0;
-			foreach($depts as &$dept) {
-				$sqlthiseval = "SELECT SUM(eval_score) FROM eval
-								WHERE eval_effective = '1' AND
-								eval_class = ". (string) $loopingyear. (string) $thisclass. "AND
-								eval_dept_name = '". (string) $dept. "'";	// Current evaluation period SQL
-				$sqlthisreturn = $newlink->query($sqlthiseval);
-				$thistotal += $sqlthisreturn->fetch_field()->SUM(eval_score);
-				echo '<td>'. (string) $sqlthisreturn->fetch_field()->SUM(eval_score). '</td>';
-			}
-			echo '<td>'. (string) $thistotal. '</td>';
-			echo '</tr>\n'
-		}
-	}
+// Load departments
+  $result = loaddepts($newlink);
+  $count = 1;
+  $depts = array();
+
+  /* Notice:
+   * Departments are sequenced according to the layout of table
+   * If the sequence of departments appears differently from the record in database
+   * Wrong subtotal will be assigned.
+   */
+
+  while ($loader = $result->fetch_field()) {
+    $depts[$count] = $loader->dept_name;
+  }
+// Departments loaded
+
+function printthiseval() {
+  echo '<tr align="center">';
+
+  // Define a grade counter;
+  $gradecount = 0;
+
+  foreach ($histgrade as &$gradeinfo) {
+    $loopingyear = $histyear - $gradecount;
+    $numofclasses = $gradeinfo % 10;
+
+    for ($q = 0; $q < $numofclasses; $q++) {
+      $thisclass = ($gradeinfo - $numofclasses) / 10 + $q;
+
+      // First column: Grade and Class
+      echo '<td>Grade '.  (string) $loopingyear. ' Class '. (string) $thisclass. '</td>';
+
+      $thistotal = 0;
+      foreach($depts as &$dept) {
+        // Select SUM(eval_score), less php loops
+        $sqlthiseval = 'SELECT SUM(eval_score) FROM eval
+        		WHERE eval_effective = \'1\' AND
+        		eval_class = \'. (string) $loopingyear. (string) $thisclass. ' AND
+        		eval_dept_name = \''. (string) $dept. '\'';
+
+        $sqlthisreturn = $newlink->query($sqlthiseval);
+        $depttotal = $sqlthisreturn->fetch_field()->SUM(eval_score);
+        $thistotal += $depttotal;
+
+        // Second to the last but one columns, for each departments
+        echo '<td>'. (string) $depttotal. '</td>';
+      }
+
+      // Last column, class total
+      echo '<td>'. (string) $thistotal. '</td></tr>\n';
+    }
+
+    $gradecount++;
+  }
 }
 
-//$sqlpreveval = 'SELECT FROM WHERE';	// Previous evaluation period SQL
-
-?>
+function printpreveval() {
+  // To be filled out.
+}

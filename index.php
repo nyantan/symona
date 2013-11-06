@@ -3,7 +3,7 @@
 <script src="script/jQuery.js"></script>
 <script src="script/jQuery.SHA.js"></script>
 <script src="script/Mootools.js"></script>
-<script>
+<script language="javascript">
 function SunnyMonkMouseover() {
 	$("img#SunnyMonk").stop(true).animate({marginTop: '-9.5px'}, 200);
 }
@@ -47,7 +47,6 @@ function  LoginSubmit(Login) {
 }
 
 $(document).ready(function() {
-	$("input#ShortQueryButton").slideUp(0);
 	$("#Previous").fadeOut(0);
 	$("img.Shadow#TabPrevious").fadeOut(0);
 	$("#History").fadeOut(0);
@@ -60,7 +59,7 @@ $(document).ready(function() {
 	$("img#QueryButton").click(function() {
 		$("img#QueryButton").animate({width: '-200px'}, 500).queue(function(next) {
 			$("input#QueryContent").animate({width: '360px'}, 500).queue(function(next) {
-				$("input#ShortQueryButton").slideDown(300);
+				$("input#ShortQueryButton").animate({width: '150px'}, 200);
 			});
 			next();
 		});
@@ -122,6 +121,7 @@ table {
 </style>
 <html>
 <head>
+	<script type="text/javascript" src="http://api.hitokoto.us/rand?encode=js&charset=utf-8"></script>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>学生会量化系统公示</title>
 </head>
@@ -160,8 +160,10 @@ table {
 <!--Notice! Input!-->
 				<form id="Query" name="Query" method="get" action="Query.php">
 					<table border="0" style="margin: 0px -360px -70px 100px">
-						<tr><td><input id="QueryContent" class="font Text" type="text" style="height: 35px; width: 0px;" /></td></tr>
-						<tr style="font-size:0px"><td><input type="image" src="image/ShortQueryButton.png" id="ShortQueryButton" style="margin: 0px -35px 0px 0px; height: 35px; width: 360px;" /></td></tr>
+						<tr>
+						<td><input id="QueryContent" class="font Text" type="text" style="height: 35px; width: 0px;" /></td>
+						<td><input type="image" src="image/ShortQueryButton.png" id="ShortQueryButton" class="Button" style="margin: 0px -35px 0px 0px; height: 40px; width: 0px" /></td>
+						</tr>
 					</table>
 				</form>
 <!--Input End-->
@@ -182,79 +184,23 @@ table {
 					</tr>
 				</table>
 				<table id="Current" border="1" style="margin: 170px 0px 0px 160px; width: 470px; border-collapse: collapse;">
+					<!-- <tr><div id="hitokoto"><script>hitokoto()</script></div></tr> -->
 					<tr><th>班级</th><th>学习</th><th>自律</th><th>生活</th><th>卫生</th><th>文艺</th><th>体育</th><th>宿管</th><th>总分</th></tr>
-<!--Notice! Output Of Current Tab!-->
-<!--Format:-------------------------------------------------------------------------------------------------------------------------------------------------------------
-<tr align="center"><td>班级</td><td>学习</td><td>自律</td><td>生活</td><td>卫生</td><td>文艺</td><td>体育</td><td>宿管</td><td>总分</td></tr>
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
-<?php
-include('Uconn.php');
-
-try {
-	$newlink = ulink($server, $user, $pass, $database);
-} catch (Exception $ex) {
-	echo $ex->getMessage();
-}
-
-// Load from loadsettings()
-	$loaded = loadsettings($newlink);
-	while ($loader = $loaded->fetch_field()) {
-		$histyear = $loader->lhconf_year;
-		$histy = array(1 => $loader->lhconf_y10,
-					   2 => $loader->lhconf_y11,
-					   3 => $loader->lhconf_y12);
-	}
-	$loaded = null;
-// END of loadsettings()
-// Load from loaddepts()
-	$loaded = loaddepts($newlink);
-	$count = 1;
-	$depts = array();
-	while ($loader = $loaded->fetch_field()) {
-		$depts[$count] = $loader->dept_name;
-	}
-	return $depts;
-// END of loaddepts()
-
-echo '<tr align="center">';
-	$searchdate = date("Y-m-d");	// MySQL type: DATE
-	foreach($histy as &$yearinfo) {
-		$loopingyear = $histyear + $i;
-		$numofclasses = $yearinfo % 10;
-		for($q = 0; q < $numofclasses; q++) {
-			$thisclass = ((int) $yearinfo / $numofclasses) + $q;
-			echo '<td>'. (string) $loopingyear. '级'. (string) $thisclass. '班'. '</td>'
-			$thistotal = 0;
-			foreach($depts as &$dept) {
-				$sqlthiseval = "SELECT SUM(eval_score) FROM eval
-								WHERE eval_effective = '1' AND
-								eval_class = ". (string) $loopingyear. (string) $thisclass. "AND
-								eval_dept_name = '". (string) $dept. "'";	// Current evaluation period SQL
-				$sqlthisreturn = $newlink->query($sqlthiseval);
-				$thistotal += $sqlthisreturn->fetch_field()->SUM(eval_score);
-				echo '<td>'. (string) $sqlthisreturn->fetch_field()->SUM(eval_score). '</td>';
-			}
-			echo '<td>'. (string) $thistotal. '</td>';
-			echo '</tr>\n'
-		}
-	}
-?>
-
-<!--Examples:-->
-					<tr align="center"><td>高二二十一</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>250</td></tr>
-<!--Output End-->
+					<?php
+						include "Uconn.php";
+						loadsettings();			
+						loaddepts();
+						printthiseval();
+					?>
 				</table>
+
 				<table id="Previous" border="1" style="margin: 170px 0px 0px 160px; width: 470px; border-collapse: collapse;">
 					<tr><th>班级</th><th>学习</th><th>自律</th><th>生活</th><th>卫生</th><th>文艺</th><th>体育</th><th>宿管</th><th>总分</th></tr>
-<!--Notice! Output Of Current Tab!-->
-<!--Format:-------------------------------------------------------------------------------------------------------------------------------------------------------------
-<tr align="center"><td>班级</td><td>学习</td><td>自律</td><td>生活</td><td>卫生</td><td>文艺</td><td>体育</td><td>宿管</td><td>总分</td></tr>
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--Examples:-->
+					<!--Examples:-->
 					<tr align="center"><td>高二二十一</td><td>110</td><td>110</td><td>110</td><td>110</td><td>110</td><td>110</td><td>110</td><td>250</td></tr>
-<!--Output End-->
+					<!--Output End-->
 				</table>
+				
 				<div id="History" style="position: absolute; margin: 170px 0px 0px 160px; height: 300px; width: 480px;">
 					<iframe style="position: absolute; margin: 50px -470px 0px 0px; width: 480px; border-style: none;" src="ShowHistory.html">
 						<p class="font" style="margin: 0px 0px 0px 0px; width: 470px;">
