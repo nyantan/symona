@@ -187,11 +187,17 @@ table {
 					<!-- <tr><div id="hitokoto"><script>hitokoto()</script></div></tr> -->
 					<tr><th>班级</th><th>学习</th><th>自律</th><th>生活</th><th>卫生</th><th>文艺</th><th>体育</th><th>宿管</th><th>总分</th></tr>
 					<?php
+<<<<<<< HEAD
 						include "php-script/uco.php";
 						// No need to establish mysqli link everytime method is called
 						$globalconn = ulink();
 						loadsettings($globalconn);			
 						loaddepts($globalconn);
+=======
+						include "Uconn.php";
+						loadsettings();			
+						loaddepts();
+>>>>>>> 975ccde36b95afcff628183ee38c1639234c3582
 						printthiseval();
 					?>
 				</table>
