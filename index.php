@@ -126,10 +126,10 @@ table {
 	<title>学生会量化系统公示</title>
 </head>
 <body>
-<!--[if IE]>
+<!--[if lt IE9]>
 	<div id="wrap">
 		<p style="margin: 130px -240px -250px 100px; width: 240px;">
-			抱歉，IE浏览器版本又多又乱，而且无法支持该页面的大多数效果，我已经恨透它了。若你看到这个页面，请使用IE10、Firefox或Chrome以正常显示页面。</p>
+			若你看到这个页面，请使用IE10、<a href="http://mzl.la/1cFIryq">Firefox</a>或<a href="http://bit.ly/1aGAhUQ">Chrome</a>以正常显示。</p>
 		<img src="image/Window.png" id="Window" style="margin: 80px 0px 0px 60px; width: 310px; height: 240px;"/>
 	</div>
 <![endif]-->
@@ -187,9 +187,11 @@ table {
 					<!-- <tr><div id="hitokoto"><script>hitokoto()</script></div></tr> -->
 					<tr><th>班级</th><th>学习</th><th>自律</th><th>生活</th><th>卫生</th><th>文艺</th><th>体育</th><th>宿管</th><th>总分</th></tr>
 					<?php
-						include "Uconn.php";
-						loadsettings();			
-						loaddepts();
+						include "php-script/uco.php";
+						// No need to establish mysqli link everytime method is called
+						$globalconn = ulink();
+						loadsettings($globalconn);			
+						loaddepts($globalconn);
 						printthiseval();
 					?>
 				</table>
